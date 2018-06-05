@@ -1,0 +1,39 @@
+
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# An example controller showing a sample home page
+GET     /                           controllers.HomeController.index
+
+
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+
+
+# Step2
+# 設定功能API
+# 先創建管理員，再使用管理員登入，再使用管理員身份創造用戶
++nocsrf
+POST    /admin                       controllers.FabricController.registerAdmin
++nocsrf
+POST    /login                    controllers.FabricController.loginByPem
++nocsrf
+POST    /user                     controllers.FabricController.registerUser
+
+
+# 對資產Tuna進行CRU的動作
+# 可透過Http GET方法，Query String查閱Tuna
+# 可透過Http POST方法，增加Tuna
+# 可透過Http PUT方法，變更Tuna持有者
++nocsrf
+GET     /tuna                     controllers.TunaController.getTuna(Key)
++nocsrf
+POST    /tuna                     controllers.TunaController.addTuna
++nocsrf
+PUT     /tuna                     controllers.TunaController.changeTunaOwner
+
+# 一次性查閱大量Tuna
++nocsrf
+GET     /tunas                    controllers.TunaController.getAllTuna
