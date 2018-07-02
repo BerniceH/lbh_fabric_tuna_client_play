@@ -58,7 +58,7 @@ class FabricController @Inject()(
             Ok("v_postAdmin")
           }
         )(
-          _ => Forbidden("用戶身份已經存在")
+          _ => Forbidden("admin_alExists")
         )
       }
     )
@@ -82,7 +82,7 @@ class FabricController @Inject()(
       if(Files.exists(Paths.get(userName.as[String] + ".jso"))){
         Ok("v_postLogin").withCookies(Cookie(name="X-Authorization",value=userName.as[String]))
       }else{
-        Unauthorized("沒有此用戶")
+        Unauthorized("user_nExists")
       }
 
     )
@@ -113,7 +113,7 @@ class FabricController @Inject()(
           Ok("v_postUser")
         }
         case Some(_) =>{
-          Forbidden("用戶已存在")
+          Forbidden("user_alExists")
         }
       }
     )

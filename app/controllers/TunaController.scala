@@ -140,7 +140,11 @@ class TunaController @Inject()(
       Json.fromJson[models.Tuna](request.body).fold(
         _ => BadRequest("封包內容不符合"),
         tuna => {
-          val resultIter = invokeTransactionChaincode(appUser,functionName = "recordTuna",args=Array(tuna.key.get ,tuna.vessel,tuna.timestamp,tuna.location,tuna.holder))
+
+          val getTunas = invokeQueryChaincode(appUser,functionName = "queryAllTuna",args=Array[String]())
+          val count = getTunas.toList.length
+
+          val resultIter = invokeTransactionChaincode(appUser,functionName = "recordTuna",args=Array((count+1).toString ,tuna.vessel,tuna.timestamp,tuna.location,tuna.holder))
 
           if(resultIter.head.getChaincodeActionResponseStatus==200){
             Ok("v_postTuna")
@@ -171,6 +175,7 @@ class TunaController @Inject()(
       Json.fromJson[models.Tuna](request.body).fold(
         _ => BadRequest("封包內容不符合"),
         tuna => {
+
           val resultIter = invokeTransactionChaincode(appUser,functionName = "changeTunaHolder",args=Array(tuna.key.get,tuna.holder))
 
           if(resultIter.head.getChaincodeActionResponseStatus==200){
