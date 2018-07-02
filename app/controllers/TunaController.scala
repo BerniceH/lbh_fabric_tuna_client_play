@@ -106,13 +106,13 @@ class TunaController @Inject()(
   * output
   *   [{"holder":"Miriam","location":"67.0006, -70.5476","timestamp":"1504054225","vessel":"923F"}]
   * */
-  def getTuna(Key:String) = loggingAction{ implicit request =>
+  def getTuna(key:String) = loggingAction{ implicit request =>
     val clientName = request.cookies.get("X-Authorization").get.value
     UtilTools.tryDeserialize(clientName).fold(
       ifEmpty = Unauthorized("無此用戶")
     )(appUser =>{
 
-      val resultIter = invokeQueryChaincode(appUser,functionName = "queryTuna",args=Array(Key))
+      val resultIter = invokeQueryChaincode(appUser,functionName = "queryTuna",args=Array(key))
 
       val resultJsonArray = resultIter.map{ record =>
         Json.parse(new String(record.getChaincodeActionResponsePayload))
@@ -140,10 +140,10 @@ class TunaController @Inject()(
       Json.fromJson[models.Tuna](request.body).fold(
         _ => BadRequest("封包內容不符合"),
         tuna => {
-          val resultIter = invokeTransactionChaincode(appUser,functionName = "recordTuna",args=Array(tuna.Key.get ,tuna.vessel,tuna.timestamp,tuna.location,tuna.holder))
+          val resultIter = invokeTransactionChaincode(appUser,functionName = "recordTuna",args=Array(tuna.key.get ,tuna.vessel,tuna.timestamp,tuna.location,tuna.holder))
 
           if(resultIter.head.getChaincodeActionResponseStatus==200){
-            Ok("塞入資料成功")
+            Ok("v_postTuna")
           }else{
             InternalServerError("請重新塞入資料")
           }
@@ -171,10 +171,10 @@ class TunaController @Inject()(
       Json.fromJson[models.Tuna](request.body).fold(
         _ => BadRequest("封包內容不符合"),
         tuna => {
-          val resultIter = invokeTransactionChaincode(appUser,functionName = "changeTunaHolder",args=Array(tuna.Key.get,tuna.holder))
+          val resultIter = invokeTransactionChaincode(appUser,functionName = "changeTunaHolder",args=Array(tuna.key.get,tuna.holder))
 
           if(resultIter.head.getChaincodeActionResponseStatus==200){
-            Ok("塞入資料成功")
+            Ok("v_putTuna")
           }else{
             InternalServerError("請重新塞入資料")
           }
