@@ -31,11 +31,11 @@ class TunaController @Inject()(
   * */
   def getChannel(hfClient:HFClient) = { // initialize channel
     // peer name and endpoint in fabcar network
-    val peer = hfClient.newPeer("peer0.org1.example.com", "grpc://localhost:7051")
+    val peer = hfClient.newPeer("peer0.org1.example.com", "grpc://peer0.org1.example.com:7051")
     // eventhub name and endpoint in fabcar network
-    val eventHub = hfClient.newEventHub("eventhub01", "grpc://localhost:7053")
+    val eventHub = hfClient.newEventHub("eventhub01", "grpc://peer0.org1.example.com:7053")
     // orderer name and endpoint in fabcar network
-    val orderer = hfClient.newOrderer("orderer.example.com", "grpc://localhost:7050")
+    val orderer = hfClient.newOrderer("orderer.example.com", "grpc://orderer.example.com:7050")
     // channel name in fabcar network
     val channel = hfClient.newChannel("mychannel")
     channel.addPeer(peer)
