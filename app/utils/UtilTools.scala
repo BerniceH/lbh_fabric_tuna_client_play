@@ -30,7 +30,7 @@ object UtilTools {
     val cryptoSuite: org.hyperledger.fabric.sdk.security.CryptoSuite  = org.hyperledger.fabric.sdk.security.CryptoSuite.Factory.getCryptoSuite
 
     //    創建客戶端
-    val caClient = HFCAClient.createNewInstance("http://localhost:7054", null)
+    val caClient = HFCAClient.createNewInstance("http://ca.example.com:7054", null)
 
     //    設置該客戶端的加密套件
     caClient.setCryptoSuite(cryptoSuite)
