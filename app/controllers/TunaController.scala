@@ -1,5 +1,7 @@
 package controllers
 
+import java.time.{ZoneOffset, ZonedDateTime}
+
 import models.{Tuna, TunaFromChainCode}
 import utils.UtilTools
 
@@ -130,7 +132,7 @@ class TunaController @Inject()(
         val tuna = Json.parse(new String(record.getChaincodeActionResponsePayload)).as[TunaFromChainCode]
 
         Tuna(
-          key = tuna.key,
+          key = Some(tuna.Key),
           vessel = tuna.Record.vessel,
           timestamp = tuna.Record.timestamp,
           location = tuna.Record.location,
@@ -169,9 +171,13 @@ class TunaController @Inject()(
 
           // 確認現在chaincode上有多少筆數。用數到的筆數+1，當作key值
           val getTunas = invokeQueryChaincode(appUser,functionName = "queryAllTuna",args=Array[String]())
-          val count = getTunas.toList.head.getChaincodeActionResponsePayload.length
+          val count = getTunas.map{ record =>
 
-          val resultIter = invokeTransactionChaincode(appUser,functionName = "recordTuna",args=Array((count+1).toString ,tuna.vessel,tuna.timestamp,tuna.location,tuna.holder))
+            Json.parse(new String(record.getChaincodeActionResponsePayload)).as[List[TunaFromChainCode]]
+
+          }.toArray
+
+          val resultIter = invokeTransactionChaincode(appUser,functionName = "recordTuna",args=Array((count.head.length+1).toString ,tuna.vessel,ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond.toString,tuna.location,tuna.holder))
 
           if(resultIter.head.getChaincodeActionResponseStatus==200){
             Ok("v_postTuna")
@@ -244,11 +250,15 @@ class TunaController @Inject()(
       val resultIter = invokeQueryChaincode(appUser,functionName = "queryAllTuna",args=Array[String]())
 
       val resultJsonArray = resultIter.map{ record =>
+ 
+        logger.debug(s"response from chaincode = ${new String(record.getChaincodeActionResponsePayload)}")
 
-        Json.parse(new String(record.getChaincodeActionResponsePayload)).as[List[List[TunaFromChainCode]]].head.map { tuna =>
+        Json.parse(new String(record.getChaincodeActionResponsePayload)).as[List[TunaFromChainCode]].map { tuna =>
+
+          logger.debug(s"response from chaincode a single tuna = ${tuna.toString}")
 
           Tuna(
-            key = tuna.key,
+            key = Some(tuna.Key),
             vessel = tuna.Record.vessel,
             timestamp = tuna.Record.timestamp,
             location = tuna.Record.location,
