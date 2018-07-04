@@ -1,21 +1,16 @@
 package controllers
 
-
-import javax.inject._
-import play.api.mvc._
-import play.api.libs.json._
-import play.api.Logger
-
 import models.AppUser
+import utils.UtilTools
 
 import java.nio.file.Files
 import java.nio.file.Paths
+import javax.inject._
 
-
-import utils.UtilTools
+import play.api.mvc._
+import play.api.Logger
 
 import controllers.custom.actions.LoggingAction
-
 
 /*
 *
@@ -43,6 +38,8 @@ class FabricController @Inject()(
   * */
   def registerAdmin =  Action(parse.json){ implicit  request =>
 
+    logger.debug(s"enter function registerAdmin")
+
     val appUserJsonMappingResult:Option[AppUser] = AppUser.apply(request.body)
 
     appUserJsonMappingResult.fold(
@@ -58,7 +55,10 @@ class FabricController @Inject()(
             Ok("v_postAdmin")
           }
         )(
-          _ => Forbidden("admin_alExists")
+          _ => {
+            logger.debug(s"function registerAdmin : admin already exist")
+            Forbidden("admin_alExists")
+          }
         )
       }
     )
@@ -75,6 +75,9 @@ class FabricController @Inject()(
   *
   * */
   def loginByPem = Action(parse.json){ implicit request =>
+
+    logger.debug(s"enter function loginByPem")
+
     request.body.\("name").toOption.fold(
       ifEmpty = BadRequest("封包內容有誤")
     )( userName =>
@@ -82,6 +85,7 @@ class FabricController @Inject()(
       if(Files.exists(Paths.get(userName.as[String] + ".jso"))){
         Ok("v_postLogin").withCookies(Cookie(name="X-Authorization",value=userName.as[String]))
       }else{
+        logger.debug(s"function loginByPem : user not exist")
         Unauthorized("user_nExists")
       }
 
@@ -99,6 +103,9 @@ class FabricController @Inject()(
   *
   * */
   def registerUser = loggingAction(parse.json){ implicit request =>
+
+    logger.debug(s"enter function registerUser")
+
     request.body.\("name").toOption.fold(
       ifEmpty= BadRequest("未填寫用戶id")
     )( userName =>
@@ -113,6 +120,7 @@ class FabricController @Inject()(
           Ok("v_postUser")
         }
         case Some(_) =>{
+          logger.debug(s"function registerUser : user already exist")
           Forbidden("user_alExists")
         }
       }

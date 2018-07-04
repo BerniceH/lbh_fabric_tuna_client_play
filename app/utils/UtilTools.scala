@@ -1,16 +1,15 @@
 package utils
 
+import models.AppUser
+
 import java.io.{ObjectInputStream, ObjectOutputStream}
 import java.nio.file.{Files, Paths}
 
-import models.AppUser
-import org.hyperledger.fabric_ca.sdk.HFCAClient
-
 import scala.util.Try
 
+import org.hyperledger.fabric_ca.sdk.HFCAClient
 import org.hyperledger.fabric.sdk.HFClient
 import org.hyperledger.fabric.sdk.security.CryptoSuite
-
 
 /*
 *

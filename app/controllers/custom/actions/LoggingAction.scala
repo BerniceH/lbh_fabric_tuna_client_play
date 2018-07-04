@@ -1,17 +1,16 @@
 package controllers.custom.actions
 
 import java.nio.file.{Files, Paths}
-
-import akka.util.ByteString
-import com.google.rpc.BadRequest
 import javax.inject.Inject
-import play.api.mvc._
 
 import scala.concurrent.ExecutionContext
-
 import scala.concurrent.Future
+
 import play.api.Logger
 import play.api.http.HttpEntity
+import play.api.mvc._
+
+import akka.util.ByteString
 
 /*
 *

@@ -1,27 +1,30 @@
 package controllers
 
-import java.util
-
-import controllers.custom.actions.LoggingAction
-import javax.inject._
-
-import org.hyperledger.fabric.sdk.{ChaincodeID, HFClient}
-import play.api.mvc._
-
+import models.{Tuna, TunaFromChainCode}
 import utils.UtilTools
 
-import collection.JavaConverters._
+import java.util
+import javax.inject._
 
+import controllers.custom.actions.LoggingAction
 
+import play.api.mvc._
 import play.api.libs.json._
+
+import collection.JavaConverters._
+import org.hyperledger.fabric.sdk.{ChaincodeID, HFClient}
 
 @Singleton
 class TunaController @Inject()(
                                 loggingAction: LoggingAction,
                                 cc: ControllerComponents) extends AbstractController(cc)  {
 
+  implicit val logger = play.api.Logger(this.getClass)
 
   implicit val tunaFormat = Json.format[models.Tuna]
+
+  implicit val recordFormat = Json.format[models.Record]
+  implicit val tunaFromChainCodeFormat = Json.format[models.TunaFromChainCode]
 
   /*
   *
@@ -31,11 +34,11 @@ class TunaController @Inject()(
   * */
   def getChannel(hfClient:HFClient) = { // initialize channel
     // peer name and endpoint in fabcar network
-    val peer = hfClient.newPeer("peer0.org1.example.com", "grpc://localhost:7051")
+    val peer = hfClient.newPeer("peer0.org1.example.com", "grpc://peer0.org1.example.com:7051")
     // eventhub name and endpoint in fabcar network
-    val eventHub = hfClient.newEventHub("eventhub01", "grpc://localhost:7053")
+    val eventHub = hfClient.newEventHub("eventhub01", "grpc://peer0.org1.example.com:7053")
     // orderer name and endpoint in fabcar network
-    val orderer = hfClient.newOrderer("orderer.example.com", "grpc://localhost:7050")
+    val orderer = hfClient.newOrderer("orderer.example.com", "grpc://orderer.example.com:7050")
     // channel name in fabcar network
     val channel = hfClient.newChannel("mychannel")
     channel.addPeer(peer)
@@ -107,7 +110,13 @@ class TunaController @Inject()(
   *   [{"holder":"Miriam","location":"67.0006, -70.5476","timestamp":"1504054225","vessel":"923F"}]
   * */
   def getTuna(key:String) = loggingAction{ implicit request =>
+
+    logger.debug(s"enter function getTuna")
+
     val clientName = request.cookies.get("X-Authorization").get.value
+
+    logger.debug(s"the user using getTuna now is $clientName")
+
     UtilTools.tryDeserialize(clientName).fold(
       ifEmpty = Unauthorized("無此用戶")
     )(appUser =>{
@@ -115,10 +124,24 @@ class TunaController @Inject()(
       val resultIter = invokeQueryChaincode(appUser,functionName = "queryTuna",args=Array(key))
 
       val resultJsonArray = resultIter.map{ record =>
-        Json.parse(new String(record.getChaincodeActionResponsePayload))
+
+        logger.debug(s"the result from chaincode is $record")
+
+        val tuna = Json.parse(new String(record.getChaincodeActionResponsePayload)).as[TunaFromChainCode]
+
+        Tuna(
+          key = tuna.key,
+          vessel = tuna.Record.vessel,
+          timestamp = tuna.Record.timestamp,
+          location = tuna.Record.location,
+          holder = tuna.Record.holder
+        )
+
       }.toArray
 
-      Ok(Json.stringify(Json.toJson(resultJsonArray)))
+      logger.debug(s"the response to frontend is ${resultJsonArray.head}")
+
+      Ok(Json.stringify(Json.toJson(resultJsonArray.head)))
     })
   }
 
@@ -133,6 +156,9 @@ class TunaController @Inject()(
   *
   * */
   def addTuna = loggingAction(parse.json){ implicit request =>
+
+    logger.debug(s"enter function addTuna")
+
     val clientName = request.cookies.get("X-Authorization").get.value
     UtilTools.tryDeserialize(clientName).fold(
       ifEmpty = Unauthorized("無此用戶")
@@ -141,8 +167,9 @@ class TunaController @Inject()(
         _ => BadRequest("封包內容不符合"),
         tuna => {
 
+          // 確認現在chaincode上有多少筆數。用數到的筆數+1，當作key值
           val getTunas = invokeQueryChaincode(appUser,functionName = "queryAllTuna",args=Array[String]())
-          val count = getTunas.toList.length
+          val count = getTunas.toList.head.getChaincodeActionResponsePayload.length
 
           val resultIter = invokeTransactionChaincode(appUser,functionName = "recordTuna",args=Array((count+1).toString ,tuna.vessel,tuna.timestamp,tuna.location,tuna.holder))
 
@@ -168,6 +195,9 @@ class TunaController @Inject()(
 
   * */
   def changeTunaOwner = loggingAction(parse.json){ implicit request =>
+
+    logger.debug(s"enter function changeTunaOwner")
+
     val clientName = request.cookies.get("X-Authorization").get.value
     UtilTools.tryDeserialize(clientName).fold(
       ifEmpty = Unauthorized("無此用戶")
@@ -195,12 +225,17 @@ class TunaController @Inject()(
   *   若不合法，則Unauthorized
   *   若合法，則查詢資料，並傳回
   *
-  * output
-  *   [{"holder":"Miriam","location":"67.0006, -70.5476","timestamp":"1504054225","vessel":"923F"},
-  *    {"holder":"Miriam","location":"67.0006, -70.5476","timestamp":"1504054225","vessel":"923F"}]
+  * output from chaincode
+  *  [[{"Key":"2","Record":{"holder":"user_alice","location":"20180704","timestamp":"北冰洋","vessel":"AK47"}}]]
+  *
+  * output to frontend
+  *  [{"Key":"2","holder":"user_alice","location":"20180704","timestamp":"北冰洋","vessel":"AK47"}]
   *
   * */
   def getAllTuna = loggingAction{ implicit request =>
+
+    logger.debug(s"enter function getAllTuna")
+
     val clientName = request.cookies.get("X-Authorization").get.value
     UtilTools.tryDeserialize(clientName).fold(
       ifEmpty = Unauthorized("無此用戶")
@@ -209,10 +244,24 @@ class TunaController @Inject()(
       val resultIter = invokeQueryChaincode(appUser,functionName = "queryAllTuna",args=Array[String]())
 
       val resultJsonArray = resultIter.map{ record =>
-        Json.parse(new String(record.getChaincodeActionResponsePayload))
+
+        Json.parse(new String(record.getChaincodeActionResponsePayload)).as[List[List[TunaFromChainCode]]].head.map { tuna =>
+
+          Tuna(
+            key = tuna.key,
+            vessel = tuna.Record.vessel,
+            timestamp = tuna.Record.timestamp,
+            location = tuna.Record.location,
+            holder = tuna.Record.holder
+          )
+
+        }
+
       }.toArray
 
-      Ok(Json.stringify(Json.toJson(resultJsonArray)))
+      logger.debug(s"the response to frontend is ${resultJsonArray.head}")
+
+      Ok(Json.stringify(Json.toJson(resultJsonArray.head)))
     })
   }
 
