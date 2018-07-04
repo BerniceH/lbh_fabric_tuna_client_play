@@ -1,17 +1,13 @@
 package models
 
-
-
 import java.util
 
-import org.hyperledger.fabric.sdk.{Enrollment, User}
-import play.api.Logger
-
-import collection.JavaConverters._
-import collection.mutable._
 import scala.util.Try
+
+import play.api.Logger
 import play.api.libs.json._
 
+import org.hyperledger.fabric.sdk.{Enrollment, User}
 
 /*
 *

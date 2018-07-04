@@ -1,16 +1,15 @@
 package utils
 
+import models.AppUser
+
 import java.io.{ObjectInputStream, ObjectOutputStream}
 import java.nio.file.{Files, Paths}
 
-import models.AppUser
-import org.hyperledger.fabric_ca.sdk.HFCAClient
-
 import scala.util.Try
 
+import org.hyperledger.fabric_ca.sdk.HFCAClient
 import org.hyperledger.fabric.sdk.HFClient
 import org.hyperledger.fabric.sdk.security.CryptoSuite
-
 
 /*
 *
@@ -30,7 +29,7 @@ object UtilTools {
     val cryptoSuite: org.hyperledger.fabric.sdk.security.CryptoSuite  = org.hyperledger.fabric.sdk.security.CryptoSuite.Factory.getCryptoSuite
 
     //    創建客戶端
-    val caClient = HFCAClient.createNewInstance("http://localhost:7054", null)
+    val caClient = HFCAClient.createNewInstance("http://ca.example.com:7054", null)
 
     //    設置該客戶端的加密套件
     caClient.setCryptoSuite(cryptoSuite)
