@@ -177,7 +177,9 @@ class TunaController @Inject()(
 
           }.toArray
 
-          val resultIter = invokeTransactionChaincode(appUser,functionName = "recordTuna",args=Array((count.head.length+1).toString ,tuna.vessel,ZonedDateTime.now(ZoneOffset.UTC).toEpochSecond.toString,tuna.location,tuna.holder))
+          logger.debug(s"the tuna from frontend is = $tuna")
+
+          val resultIter = invokeTransactionChaincode(appUser,functionName = "recordTuna",args=Array(tuna.key.get ,tuna.vessel,tuna.location,tuna.timestamp,tuna.holder))
 
           if(resultIter.head.getChaincodeActionResponseStatus==200){
             Ok("v_postTuna")
