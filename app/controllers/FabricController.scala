@@ -57,7 +57,7 @@ class FabricController @Inject()(
         )(
           _ => {
             logger.debug(s"function registerAdmin : admin already exist")
-            Forbidden("admin_alExists")
+            Ok("admin_alExists")
           }
         )
       }
@@ -86,7 +86,7 @@ class FabricController @Inject()(
         Ok("v_postLogin").withCookies(Cookie(name="X-Authorization",value=userName.as[String]))
       }else{
         logger.debug(s"function loginByPem : user not exist")
-        Unauthorized("user_nExists")
+        Ok("user_nExists")
       }
 
     )
@@ -121,7 +121,7 @@ class FabricController @Inject()(
         }
         case Some(_) =>{
           logger.debug(s"function registerUser : user already exist")
-          Forbidden("user_alExists")
+          Ok("user_alExists")
         }
       }
     )
